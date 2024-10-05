@@ -1,9 +1,12 @@
 import os
+from dotenv import load_dotenv  # إضافة المكتبة
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pickle
 from pydantic import BaseModel
 import psycopg2
+
+load_dotenv()  # تحميل المتغيرات من .env
 
 app = FastAPI()
 
@@ -28,15 +31,11 @@ class GradeInput(BaseModel):
     grade_2: int
     grade_3: int
 
-
-DATABASE_URL='postgresql://postgres:VXyTHnrjkPargPUbmWQBokBULlytnMge@postgres.railway.internal:5432/railway'
-
-
 # Connect to PostgreSQL Database
 def get_db_connection():
     try:
         # استخدم DATABASE_URL من متغيرات البيئة
-        database_url = os.environ.get("DATABASE_URl")  # تأكد من أن هذا المتغير موجود في بيئة Railway
+        database_url = os.environ.get("DATABASE_URL")  # تأكد من كتابة الاسم الصحيح للمتغير
         if not database_url:
             raise ValueError("DATABASE_URL is not set in the environment.")
         
@@ -102,5 +101,3 @@ def prediction(input_data: GradeInput):
     except psycopg2.Error as e:
         print(f"Prediction error: {e}")
         return {"error": "Failed to add predictions to PostgreSQL"}
-        
-
