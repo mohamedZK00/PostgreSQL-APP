@@ -1,29 +1,24 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import pickle 
+import pickle
 from pydantic import BaseModel
 import psycopg2
 
-
-
 app = FastAPI()
 
-#Load model
+# Load model
 working_dir = os.path.dirname(os.path.realpath(__file__))
 model_path = os.path.join(working_dir, 'MLPRegressor_grade')
 
 with open(model_path, 'rb') as f:
     model = pickle.load(f)
-    
-#model = pickle.load(open(r"E:\Spyder_code_for_fastapi\app_Student\rfr_97%",'rb'))
 
-
-# لتشغيل ال api علي انترنت بدون حدوث اي مشاكل
+# لتشغيل ال API علي انترنت بدون حدوث اي مشاكل
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True, # يسمح بالوصول الي اي مصدر 
+    allow_credentials=True,  # يسمح بالوصول الي اي مصدر 
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -36,9 +31,14 @@ class GradeInput(BaseModel):
 # Connect to PostgreSQL Database
 def get_db_connection():
     try:
-        conn = psycopg2.connect(dbname="db_grades_1", user="postgres", password="admin", host="localhost", port="5432" )
+        conn = psycopg2.connect(
+            dbname=os.environ.get("DB_NAME", "db_grades_1"),
+            user=os.environ.get("DB_USER", "postgres"),
+            password=os.environ.get("DB_PASSWORD", "admin"),
+            host=os.environ.get("DB_HOST", "localhost"),
+            port=os.environ.get("DB_PORT", "5432")
+        )
         return conn
-    
     except psycopg2.Error as e:
         print(e)
         return None
@@ -49,7 +49,7 @@ def db_create():
         conn = get_db_connection()
         if conn is None:
             return {"error": "Connection to PostgreSQL failed_1"}
-        
+
         cursor = conn.cursor()
         cursor.execute(''' 
             CREATE TABLE IF NOT EXISTS students_grades (
@@ -75,7 +75,7 @@ def prediction(input_data: GradeInput):
         conn = get_db_connection()
         if conn is None:
             return {"error": "Connection to PostgreSQL failed_2"}
-        
+
         cursor = conn.cursor()
         
         # Prepare data for prediction
@@ -96,4 +96,3 @@ def prediction(input_data: GradeInput):
     except psycopg2.Error as e:
         print(e)
         return {"error": "Failed to add predictions to PostgreSQL"}
-
