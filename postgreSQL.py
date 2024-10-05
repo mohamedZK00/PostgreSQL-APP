@@ -32,7 +32,7 @@ class GradeInput(BaseModel):
 def get_db_connection():
     try:
         # استخدم DATABASE_URL مباشرة
-        database_url = os.environ.get("DATABASE_URL")
+        database_url = os.environ.get("DATABASE_URl")
         conn = psycopg2.connect(database_url)
         return conn
     except psycopg2.Error as e:
