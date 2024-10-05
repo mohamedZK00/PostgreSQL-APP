@@ -1,12 +1,13 @@
 import os
-from dotenv import load_dotenv  # إضافة المكتبة
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, FileResponse
 import pickle
 from pydantic import BaseModel
 import psycopg2
 
-load_dotenv()  # تحميل المتغيرات من .env
+load_dotenv()
 
 app = FastAPI()
 
@@ -34,8 +35,7 @@ class GradeInput(BaseModel):
 # Connect to PostgreSQL Database
 def get_db_connection():
     try:
-        # استخدم DATABASE_URL من متغيرات البيئة
-        database_url = os.environ.get("DATABASE_URL")  # تأكد من كتابة الاسم الصحيح للمتغير
+        database_url = os.environ.get("DATABASE_URL")
         if not database_url:
             raise ValueError("DATABASE_URL is not set in the environment.")
         
@@ -72,6 +72,10 @@ def db_create():
 # Create table when the app starts
 db_create()
 
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    return FileResponse("index.html")
+
 @app.post('/predict')
 def prediction(input_data: GradeInput):
     try:
@@ -80,12 +84,9 @@ def prediction(input_data: GradeInput):
             return {"error": "Connection to PostgreSQL failed during prediction"}
 
         cursor = conn.cursor()
-
-        # Prepare data for prediction
         data = [[input_data.grade_1, input_data.grade_2, input_data.grade_3]]
         predictions = model.predict(data)
 
-        # Insert data into the PostgreSQL table
         cursor.execute(
             "INSERT INTO students_grade_2 (grade_month_1, grade_month_2, grade_month_3, predictions) VALUES (%s, %s, %s, %s)",
             (input_data.grade_1, input_data.grade_2, input_data.grade_3, float(round(predictions[0], 2)))
