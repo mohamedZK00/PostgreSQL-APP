@@ -31,13 +31,9 @@ class GradeInput(BaseModel):
 # Connect to PostgreSQL Database
 def get_db_connection():
     try:
-        conn = psycopg2.connect(
-            dbname=os.environ.get("DB_NAME", "db_grades_1"),
-            user=os.environ.get("DB_USER", "postgres"),
-            password=os.environ.get("DB_PASSWORD", "admin"),
-            host=os.environ.get("DB_HOST", "localhost"),
-            port=os.environ.get("DB_PORT", "5432")
-        )
+        # استخدم DATABASE_URL مباشرة
+        database_url = os.environ.get("DATABASE_URL")
+        conn = psycopg2.connect(database_url)
         return conn
     except psycopg2.Error as e:
         print(e)
