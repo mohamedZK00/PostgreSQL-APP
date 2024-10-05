@@ -88,7 +88,7 @@ def prediction(input_data: GradeInput):
         # Insert data into the PostgreSQL table
         cursor.execute(
             "INSERT INTO students_grade_2 (grade_month_1, grade_month_2, grade_month_3, predictions) VALUES (%s, %s, %s, %s)",
-            (input_data.grade_1, input_data.grade_2, input_data.grade_3, round(predictions[0], 2))
+            (input_data.grade_1, input_data.grade_2, input_data.grade_3, float(round(predictions[0], 2)))
         )
         conn.commit()
 
