@@ -48,7 +48,7 @@ def db_create():
 
         cursor = conn.cursor()
         cursor.execute(''' 
-            CREATE TABLE IF NOT EXISTS students_grades_2 (
+            CREATE TABLE IF NOT EXISTS students_grade_2 (
                 id SERIAL PRIMARY KEY,
                 grade_month_1 INTEGER NOT NULL,
                 grade_month_2 INTEGER NOT NULL,
