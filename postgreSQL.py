@@ -1,8 +1,8 @@
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # إضافة المكتبة
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse
 import pickle
 from pydantic import BaseModel
 import psycopg2
@@ -35,7 +35,7 @@ class GradeInput(BaseModel):
 # Connect to PostgreSQL Database
 def get_db_connection():
     try:
-        database_url = os.environ.get("DATABASE_URL")
+        database_url = os.environ.get("DATABASE_URL")  # تأكد من كتابة الاسم الصحيح للمتغير
         if not database_url:
             raise ValueError("DATABASE_URL is not set in the environment.")
         
@@ -74,6 +74,7 @@ db_create()
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
+    # تقديم واجهة المستخدم
     return """
     <!DOCTYPE html>
     <html lang="en">
@@ -81,27 +82,77 @@ def read_root():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
         <title>Student Grade Prediction</title>
+        <style>
+            body, html {
+                height: 100%;
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background-image: url('https://img.freepik.com/free-photo/schoolgirl-with-notebook-her-hands-sunset-background-school-goes-school_169016-57817.jpg?w=1380&t=st=1728160456~exp=1728161056~hmac=626fc8cfc661e660633d4e06d5a25ded225d31ca86b428630a453b4112062a14');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            }
+
+            .card {
+                border-radius: 15px;
+                background-color: rgba(255, 255, 255, 0.9);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                padding: 20px;
+                margin-top: 100px;
+            }
+
+            h1 {
+                color: #333;
+                text-align: center;
+            }
+
+            .btn-primary {
+                background-color: #ff5722;
+                border: none;
+            }
+
+            .btn-primary:hover {
+                background-color: #e64a19;
+            }
+
+            #result {
+                transition: all 0.3s ease;
+            }
+
+            .container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+
+        </style>
     </head>
     <body>
-        <div class="container mt-5">
-            <h1 class="text-center">Student Grade Prediction</h1>
-            <form id="gradeForm">
-                <div class="form-group">
-                    <label for="grade1">Grade Month 1:</label>
-                    <input type="number" class="form-control" id="grade1" required>
-                </div>
-                <div class="form-group">
-                    <label for="grade2">Grade Month 2:</label>
-                    <input type="number" class="form-control" id="grade2" required>
-                </div>
-                <div class="form-group">
-                    <label for="grade3">Grade Month 3:</label>
-                    <input type="number" class="form-control" id="grade3" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Predict</button>
-            </form>
-            <div id="result" class="mt-3"></div>
+        <div class="container">
+            <div class="card p-4">
+                <h1 class="text-center mb-4"><i class="fas fa-graduation-cap"></i> Student Grade Prediction</h1>
+                
+                <form id="gradeForm">
+                    <div class="form-group">
+                        <label for="grade1">Grade_month 1</label>
+                        <input type="number" class="form-control" id="grade1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="grade2">Grade_month 2</label>
+                        <input type="number" class="form-control" id="grade2" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="grade3">Grade_month 3</label>
+                        <input type="number" class="form-control" id="grade3" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Predict <i class="fas fa-paper-plane"></i></button>
+                </form>
+                <div id="result" class="mt-4"></div>
+            </div>
         </div>
 
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -124,10 +175,27 @@ def read_root():
                         }),
                         success: function(response) {
                             const predictedGrade = response.predicted_grade;
-                            $('#result').html(`<div class="alert alert-success">Predicted Grade: ${predictedGrade}</div>`);
+                            let message = '';
+
+                            if (predictedGrade >= 90) {
+                                message = '🎉 Excellent Job! Keep it up!';
+                            } else if (predictedGrade >= 75) {
+                                message = '😊 Good Job! You are doing well!';
+                            } else if (predictedGrade >= 60) {
+                                message = '👍 Not bad! A little more effort!';
+                            } else {
+                                message = '😞 Don’t worry! You can improve!';
+                            }
+
+                            $('#result').html(`
+                                <div class="alert alert-success fade show">
+                                    ${message} <br>
+                                    Predicted value: ${predictedGrade}
+                                </div>
+                            `);
                         },
                         error: function(xhr) {
-                            $('#result').html(`<div class="alert alert-danger">Error: ${xhr.responseJSON.error}</div>`);
+                            $('#result').html(`<div class="alert alert-danger fade show">Error occurred: ${xhr.responseJSON.error}</div>`);
                         }
                     });
                 });
@@ -145,9 +213,12 @@ def prediction(input_data: GradeInput):
             return {"error": "Connection to PostgreSQL failed during prediction"}
 
         cursor = conn.cursor()
+
+        # Prepare data for prediction
         data = [[input_data.grade_1, input_data.grade_2, input_data.grade_3]]
         predictions = model.predict(data)
 
+        # Insert data into the PostgreSQL table
         cursor.execute(
             "INSERT INTO students_grade_2 (grade_month_1, grade_month_2, grade_month_3, predictions) VALUES (%s, %s, %s, %s)",
             (input_data.grade_1, input_data.grade_2, input_data.grade_3, float(round(predictions[0], 2)))
