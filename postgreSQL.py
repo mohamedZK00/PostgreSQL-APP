@@ -48,7 +48,7 @@ def db_create():
     try:
         conn = get_db_connection()
         if conn is None:
-            return {"error": "Connection to PostgreSQL failed"}
+            return {"error": "Connection to PostgreSQL failed_1"}
         
         cursor = conn.cursor()
         cursor.execute(''' 
@@ -74,7 +74,7 @@ def prediction(input_data: GradeInput):
     try:
         conn = get_db_connection()
         if conn is None:
-            return {"error": "Connection to PostgreSQL failed"}
+            return {"error": "Connection to PostgreSQL failed_2"}
         
         cursor = conn.cursor()
         
