@@ -69,7 +69,7 @@ db_create()
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     """إرجاع ملف HTML الرئيسي."""
-    return FileResponse("index.html")
+    return FileResponse("16.html")
 
 @app.post('/predict')
 def prediction(input_data: GradeInput):
