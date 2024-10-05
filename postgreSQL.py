@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pickle 
@@ -8,7 +9,14 @@ import psycopg2
 
 app = FastAPI()
 
-model = pickle.load(open(r"E:\Spyder_code_for_fastapi\app_Student\rfr_97%",'rb'))
+#Load model
+working_dir = os.path.dirname(os.path.realpath(__file__))
+model_path = os.path.join(working_dir, 'MLPRegressor_grade')
+
+with open(model_path, 'rb') as f:
+    model = pickle.load(f)
+    
+#model = pickle.load(open(r"E:\Spyder_code_for_fastapi\app_Student\rfr_97%",'rb'))
 
 
 # لتشغيل ال api علي انترنت بدون حدوث اي مشاكل
