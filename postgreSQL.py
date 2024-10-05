@@ -1,5 +1,5 @@
 import os
-from dotenv import load_dotenv  # إضافة المكتبة
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -7,18 +7,19 @@ import pickle
 from pydantic import BaseModel
 import psycopg2
 
-load_dotenv()  # تحميل المتغيرات من .env
+# تحميل المتغيرات البيئية
+load_dotenv()
 
 app = FastAPI()
 
-# Load model
+# تحميل النموذج
 working_dir = os.path.dirname(os.path.realpath(__file__))
 model_path = os.path.join(working_dir, 'MLPRegressor_grade')
 
 with open(model_path, 'rb') as f:
     model = pickle.load(f)
 
-# Middleware for CORS
+# إعداد CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,10 +33,9 @@ class GradeInput(BaseModel):
     grade_2: int
     grade_3: int
 
-# Connect to PostgreSQL Database
 def get_db_connection():
     try:
-        database_url = os.environ.get("DATABASE_URL")  # تأكد من كتابة الاسم الصحيح للمتغير
+        database_url = os.environ.get("DATABASE_URL")
         if not database_url:
             raise ValueError("DATABASE_URL is not set in the environment.")
         
@@ -45,7 +45,6 @@ def get_db_connection():
         print(f"Database connection error: {e}")
         return None
 
-# Create the table if it does not exist
 def db_create():
     try:
         conn = get_db_connection()
@@ -69,12 +68,10 @@ def db_create():
         print(f"Table creation error: {e}")
         return {"error": "Failed to create table in PostgreSQL"}
 
-# Create table when the app starts
 db_create()
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
-    # تقديم واجهة المستخدم
     return """
     <!DOCTYPE html>
     <html lang="en">
@@ -95,47 +92,38 @@ def read_root():
                 background-repeat: no-repeat;
                 background-attachment: fixed;
             }
-
             .card {
                 border-radius: 15px;
-                background-color: rgba(255, 255, 255, 0.9);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                background-color: rgba(255, 255, 255, 0.8);
                 padding: 20px;
                 margin-top: 100px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             }
-
             h1 {
                 color: #333;
-                text-align: center;
             }
-
             .btn-primary {
                 background-color: #ff5722;
                 border: none;
             }
-
-            .btn-primary:hover {
-                background-color: #e64a19;
+            .rocket {
+                font-size: 50px;
+                color: #ffcc00;
+                animation: rocket-animation 1s infinite;
             }
-
+            @keyframes rocket-animation {
+                0% { transform: translateY(0); }
+                100% { transform: translateY(-10px); }
+            }
             #result {
                 transition: all 0.3s ease;
             }
-
-            .container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-            }
-
         </style>
     </head>
     <body>
         <div class="container">
             <div class="card p-4">
                 <h1 class="text-center mb-4"><i class="fas fa-graduation-cap"></i> Student Grade Prediction</h1>
-                
                 <form id="gradeForm">
                     <div class="form-group">
                         <label for="grade1">Grade_month 1</label>
@@ -154,7 +142,6 @@ def read_root():
                 <div id="result" class="mt-4"></div>
             </div>
         </div>
-
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script>
             $(document).ready(function() {
@@ -165,7 +152,7 @@ def read_root():
                     const grade3 = $('#grade3').val();
 
                     $.ajax({
-                        url: '/predict',
+                        url: 'http://localhost:8000/predict',
                         method: 'POST',
                         contentType: 'application/json',
                         data: JSON.stringify({
@@ -176,20 +163,26 @@ def read_root():
                         success: function(response) {
                             const predictedGrade = response.predicted_grade;
                             let message = '';
+                            let icons = '';
 
                             if (predictedGrade >= 90) {
                                 message = '🎉 Excellent Job! Keep it up!';
+                                icons = '<div class="rocket">🚀 🚀 🚀</div>';
                             } else if (predictedGrade >= 75) {
                                 message = '😊 Good Job! You are doing well!';
+                                icons = '<div class="rocket">🎈 🎈 🎈</div>';
                             } else if (predictedGrade >= 60) {
                                 message = '👍 Not bad! A little more effort!';
+                                icons = '<div class="rocket">🌟 🌟 🌟</div>';
                             } else {
                                 message = '😞 Don’t worry! You can improve!';
+                                icons = '<div class="rocket">💔 💔 💔</div>';
                             }
 
                             $('#result').html(`
                                 <div class="alert alert-success fade show">
                                     ${message} <br>
+                                    ${icons} <br>
                                     Predicted value: ${predictedGrade}
                                 </div>
                             `);
@@ -213,12 +206,9 @@ def prediction(input_data: GradeInput):
             return {"error": "Connection to PostgreSQL failed during prediction"}
 
         cursor = conn.cursor()
-
-        # Prepare data for prediction
         data = [[input_data.grade_1, input_data.grade_2, input_data.grade_3]]
         predictions = model.predict(data)
 
-        # Insert data into the PostgreSQL table
         cursor.execute(
             "INSERT INTO students_grade_2 (grade_month_1, grade_month_2, grade_month_3, predictions) VALUES (%s, %s, %s, %s)",
             (input_data.grade_1, input_data.grade_2, input_data.grade_3, float(round(predictions[0], 2)))
@@ -228,9 +218,8 @@ def prediction(input_data: GradeInput):
         cursor.close()
         conn.close()
 
-        print('Predicted Grade:', round(predictions[0], 2))
         return {"message": "Student added successfully", 'predicted_grade': round(predictions[0], 2)}
 
     except psycopg2.Error as e:
         print(f"Prediction error: {e}")
-        return {"error": "Failed to add predictions to PostgreSQL"}
+        return {"error": "Failed to predict"}
