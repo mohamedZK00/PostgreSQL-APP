@@ -32,7 +32,7 @@ class GradeInput(BaseModel):
 def get_db_connection():
     try:
         # استخدم DATABASE_URL من متغيرات البيئة
-        database_url = os.environ.get("DATABASE_URL")  # تأكد من أن هذا المتغير موجود في بيئة Railway
+        database_url = os.environ.get("DATABASE_URl")  # تأكد من أن هذا المتغير موجود في بيئة Railway
         if not database_url:
             raise ValueError("DATABASE_URL is not set in the environment.")
         
