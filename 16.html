@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>Student Grade Prediction</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Full-page background */
+        body {
+            background-image: url('https://img.freepik.com/free-photo/schoolgirl-with-notebook-her-hands-sunset-background-school-goes-school_169016-57817.jpg?w=1380&t=st=1728160456~exp=1728161056~hmac=626fc8cfc661e660633d4e06d5a25ded225d31ca86b428630a453b4112062a14'); /* رابط لصورة الخلفية */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        /* Custom box for prediction form matching the background */
+        .card {
+            border-radius: 15px;
+            background-color: rgba(255, 255, 255, 0.8); /* لون صندوق التنبؤ يتناسب مع الخلفية */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            margin-top: 100px; /* المسافة من الأعلى */
+        }
+
+        h1 {
+            color: #333; /* لون النص يتناسب مع الخلفية */
+        }
+
+        .btn-primary {
+            background-color: #ff5722; /* لون الزر متناسب مع الخلفية */
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #e64a19; /* ظل أغمق عند التحويم */
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .rocket {
+            font-size: 50px;
+            color: #ffcc00; /* Yellow color for rockets */
+            animation: rocket-animation 1s infinite;
+        }
+
+        @keyframes rocket-animation {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+
+        #result {
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Full page height */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card p-4">
+            <h1 class="text-center mb-4"><i class="fas fa-graduation-cap"></i> Student Grade Prediction</h1>
+            
+            <div class="image-container">
+                <img src="https://media.istockphoto.com/id/1278975233/photo/high-school-students-doing-exam-in-classroom.jpg?s=170667a&w=0&k=20&c=tpVyJxU_5Y24fI4qlIVH9Jmz2b4cbCpcQgUHDhyI9aI=" alt="Student Learning">
+            </div>
+
+            <form id="gradeForm">
+                <div class="form-group">
+                    <label for="grade1">Grade_month 1</label>
+                    <input type="number" class="form-control" id="grade1" required>
+                </div>
+                <div class="form-group">
+                    <label for="grade2">Grade_month 2</label>
+                    <input type="number" class="form-control" id="grade2" required>
+                </div>
+                <div class="form-group">
+                    <label for="grade3">Grade_month 3</label>
+                    <input type="number" class="form-control" id="grade3" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Predict <i class="fas fa-paper-plane"></i></button>
+            </form>
+            <div id="result" class="mt-4"></div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#gradeForm').on('submit', function(event) {
+                event.preventDefault();
+                const grade1 = $('#grade1').val();
+                const grade2 = $('#grade2').val();
+                const grade3 = $('#grade3').val();
+
+                $.ajax({
+                    url: 'https://web-production-82c1.up.railway.app/predict',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        grade_1: parseInt(grade1),
+                        grade_2: parseInt(grade2),
+                        grade_3: parseInt(grade3)
+                    }),
+                    success: function(response) {
+                        const predictedGrade = response.predicted_grade;
+                        let message = '';
+                        let icons = '';
+
+                        if (predictedGrade >= 90) {
+                            message = '🎉 Excellent Job! Keep it up!';
+                            icons = '<div class="rocket">🚀 🚀 🚀</div>';
+                        } else if (predictedGrade >= 75) {
+                            message = '😊 Good Job! You are doing well!';
+                            icons = '<div class="rocket">🎈 🎈 🎈</div>';
+                        } else if (predictedGrade >= 60) {
+                            message = '👍 Not bad! A little more effort!';
+                            icons = '<div class="rocket">🌟 🌟 🌟</div>';
+                        } else {
+                            message = '😞 Don’t worry! You can improve!';
+                            icons = '<div class="rocket">💔 💔 💔</div>';
+                        }
+
+                        $('#result').html(`
+                            <div class="alert alert-success fade show">
+                                ${message} <br>
+                                ${icons} <br>
+                                Predicted value: ${predictedGrade}
+                            </div>
+                        `);
+                    },
+                    error: function(xhr, status, error) {
+                        $('#result').html(`<div class="alert alert-danger fade show">Error occurred: ${xhr.responseJSON.error}</div>`);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
