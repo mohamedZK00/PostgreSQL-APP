@@ -7,7 +7,7 @@ import pickle
 from pydantic import BaseModel
 import psycopg2
 
-load_dotenv()
+load_dotenv()  # تحميل المتغيرات من .env
 
 app = FastAPI()
 
@@ -74,7 +74,68 @@ db_create()
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
-    return FileResponse("index.html")
+    return """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <title>Student Grade Prediction</title>
+    </head>
+    <body>
+        <div class="container mt-5">
+            <h1 class="text-center">Student Grade Prediction</h1>
+            <form id="gradeForm">
+                <div class="form-group">
+                    <label for="grade1">Grade Month 1:</label>
+                    <input type="number" class="form-control" id="grade1" required>
+                </div>
+                <div class="form-group">
+                    <label for="grade2">Grade Month 2:</label>
+                    <input type="number" class="form-control" id="grade2" required>
+                </div>
+                <div class="form-group">
+                    <label for="grade3">Grade Month 3:</label>
+                    <input type="number" class="form-control" id="grade3" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Predict</button>
+            </form>
+            <div id="result" class="mt-3"></div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                $('#gradeForm').on('submit', function(event) {
+                    event.preventDefault();
+                    const grade1 = $('#grade1').val();
+                    const grade2 = $('#grade2').val();
+                    const grade3 = $('#grade3').val();
+
+                    $.ajax({
+                        url: '/predict',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            grade_1: parseInt(grade1),
+                            grade_2: parseInt(grade2),
+                            grade_3: parseInt(grade3)
+                        }),
+                        success: function(response) {
+                            const predictedGrade = response.predicted_grade;
+                            $('#result').html(`<div class="alert alert-success">Predicted Grade: ${predictedGrade}</div>`);
+                        },
+                        error: function(xhr) {
+                            $('#result').html(`<div class="alert alert-danger">Error: ${xhr.responseJSON.error}</div>`);
+                        }
+                    });
+                });
+            });
+        </script>
+    </body>
+    </html>
+    """
 
 @app.post('/predict')
 def prediction(input_data: GradeInput):
